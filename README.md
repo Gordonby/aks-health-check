@@ -23,6 +23,12 @@ There are many best-practices and some of these are subjective. So, we also have
 
 If your machine cannot reach the Kubernetes API endpoint in the private AKS cluster, then you will only be able to perform Azure checks (`aks-hc check azure`). To perform Kubernetes checks, you will have to use a bastion machine or be connected to the private network where the private cluster is deployed.
 
+Option | Description
+------ | -----------
+Option A - Run with Current User | Uses docker to run the health check process using your Azure user credentials
+Option B - Azure Bicep Deployment with Managed Identity | A bicep deployment facilitates a simple standalone deployment in Azure to run the checks. It uses either an Azure Container Instance or AKS itself to perform the analysis.
+Option C - Azure CLI with Managed Identity | Scripted with the Azure CLI, this option uses an Azure Container Instance to perform the checks. The results are then persisted in an Azure storage account.
+
 ## Option A - Run with Current User (Preferred 🌟) 
 
 Whoever is performing the health check, has to be able to use Docker and be a cluster administrator.
@@ -37,7 +43,7 @@ $ az account set -s <subscription id>
 
 $ az aks get-credentials -g <resource group> -n <cluster name>
 
-# Verify that you can interact with Kubernets 
+# Verify that you can interact with Kubernetes 
 $ kubectl get ns
 
 # aks-hc check all - checks both Azure and Kubernetes configuration
@@ -65,9 +71,23 @@ foo2
 $ aks-hc check all -g <resource group> -n <cluster name> -i ingress-nginx,kube-node-lease,kube-public,kube-system --image-registries "foo1,foo2"
 ```
 
-## Option B - Run with Managed Identity
+## Option B - Azure Bicep Deployment with Managed Identity
 
-This option walks you through running the health check using an Azure Managed Identity so that it can be tied to a "service principal". Essentially, it avoids impersoning a user or running with someone's identity.
+This option creates an Azure Deployment where all of the Identity, Compute and Storage configurations have been defined.
+
+First, select the Azure subscription.
+``` bash
+CLUSTER_NAME='YourAksClusterName'
+RESOURCE_GROUP='YourAksClusterResourceGroup'
+
+az account set -s <subscription id>
+
+az deployment group create -g $RESOURCE_GROUP -f bicep/main.bicep -p aksClusterName=$CLUSTER_NAME
+```
+
+## Option C - Azure CLI with Managed Identity
+
+This option walks you through running the health check using an Azure Managed Identity so that it can be tied to a "service principal". Essentially, it avoids impersonating a user or running with someone's identity.
 
 First, select the Azure subscription.
 ``` bash
@@ -139,7 +159,7 @@ There are about 50+ best-practice recommendations for Azure Kubernetes Service (
 | ----------- | ---------------- | ---------------- |
 | `DEV-1`     | Automated | Implement a proper liveness probe |
 | `DEV-2`     | Automated | Implement a proper readiness/startup probe |
-| `DEV-3`     | Automated | Implement a proper prestop hook |
+| `DEV-3`     | Automated | Implement a proper pre-stop hook |
 | `DEV-4`     | Automated | Run more than one replica for your deployments |
 | `DEV-5`     | Automated | Apply tags to all resources |
 | `DEV-6`     | Automated | Implement autoscaling of your applications |
@@ -213,7 +233,7 @@ Through practice, we decided to create a Google Doc for the report instead. This
 
 First, `npm install`.
 
-In VS Code, open the command patellete, then select **Debug: Toggle Auto-Attach** so that any new NodeJS application will attach the VS Code debugger.
+In VS Code, open the command palette, then select **Debug: Toggle Auto-Attach** so that any new NodeJS application will attach the VS Code debugger.
 Select the "Smart" mode.
 
 Then, from the VS Code terminal, invoke the CLI tool by running it against a cluster.
@@ -245,3 +265,9 @@ $ kubectl get ns
 $ aks-hc check kubernetes -i ingress-nginx,kube-node-lease,kube-public,kube-system
 
 ```
+
+## Troubleshooting
+
+### exec: "./start-from-aci.sh": permission denied
+
+> Error: Failed to start container REDACTED, Error response: to create containerd task: failed to create shim task: failed to create container REDACTED: guest RPC failure: failed to create container: failed to run runc create/exec call for container REDACTED with exit status 1: container_linux.go:380: starting container process caused: exec: "./start-from-aci.sh": permission denied: unknown

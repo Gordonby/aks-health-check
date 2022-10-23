@@ -32,10 +32,10 @@ resource acr 'Microsoft.ContainerRegistry/registries@2022-02-01-preview' = if(cr
 }
 
 @description('Pulls the source code from the Git repository, builds the Dockerfile to image and stores it in ACR')
-module acrImage 'br/public:deployment-scripts/build-acr:1.0.1' = {
+module acrImage 'br/public:deployment-scripts/build-acr:1.0.2' = {
   name: '${deployment().name}-buildAcrImage-linux-boxboat'
   params: {
-    AcrName: acrName
+    AcrName: createAcr ? acr.name : acrName
     location: location
     gitRepositoryUrl:  'https://github.com/Gordonby/aks-health-check.git'
     //gitBranch: 'v0.0.6'

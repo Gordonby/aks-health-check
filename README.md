@@ -23,6 +23,8 @@ There are many best-practices and some of these are subjective. So, we also have
 
 If your machine cannot reach the Kubernetes API endpoint in the private AKS cluster, then you will only be able to perform Azure checks (`aks-hc check azure`). To perform Kubernetes checks, you will have to use a bastion machine or be connected to the private network where the private cluster is deployed.
 
+### Health Check run options
+
 Option | Description
 ------ | -----------
 Option A - Run with Current User | Uses docker to run the health check process using your Azure user credentials
@@ -75,7 +77,6 @@ $ aks-hc check all -g <resource group> -n <cluster name> -i ingress-nginx,kube-n
 
 This option creates an Azure Deployment where all of the Identity, Compute and Storage configurations have been defined.
 
-First, select the Azure subscription.
 ``` bash
 CLUSTER_NAME='YourAksClusterName'
 RESOURCE_GROUP='YourAksClusterResourceGroup'
@@ -271,3 +272,7 @@ $ aks-hc check kubernetes -i ingress-nginx,kube-node-lease,kube-public,kube-syst
 ### exec: "./start-from-aci.sh": permission denied
 
 > Error: Failed to start container REDACTED, Error response: to create containerd task: failed to create shim task: failed to create container REDACTED: guest RPC failure: failed to create container: failed to run runc create/exec call for container REDACTED with exit status 1: container_linux.go:380: starting container process caused: exec: "./start-from-aci.sh": permission denied: unknown
+
+### executable file not found in $PATH
+
+> Error: Failed to start container REDACTED, Error response: to create containerd task: failed to create shim task: failed to create container REDACTED: guest RPC failure: failed to create container: failed to run runc create/exec call for container REDACTED with exit status 1: container_linux.go:380: starting container process caused: exec: "az login --identity --verbose": executable file not found in $PATH: unknown

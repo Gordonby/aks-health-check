@@ -19,7 +19,7 @@ resource readerAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' =
   }
 }
 
-@description('For the kubernetes checks')
+@description('For the Kubernetes checks')
 resource clusterAdminAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(aks.id, principalId, clusterAdminRole)
   scope: aks

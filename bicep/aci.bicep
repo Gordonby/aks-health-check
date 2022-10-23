@@ -1,18 +1,18 @@
 //This file stands up a Container Instance as the compute for analysing the AKS Cluster
 
 param nameSeed string
-param location string
+param location string = resourceGroup().location
 
-param image string
+param image string = 'ghcr.io/boxboat/aks-health-check'
 
-@description('The Azure Container Registry where the image is stored')
-param acrLoginServer string
+@description('If using ACR for image storage, the Azure Container Registry Login Server')
+param acrLoginServer string = ''
 
-@description('The Identity to be used to pull the image from ACR, and inspect the AKS cluster')
+@description('The Identity to be inspect the AKS cluster, and if using ACR to pull the image')
 param managedIdentityId string
 
 param aksClusterName string
-param aksClusterResourceGroupName string
+param aksClusterResourceGroupName string = resourceGroup().name
 
 param storageAccountName string
 param storageShareName string
@@ -32,7 +32,7 @@ resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2021-10-01'
     type: 'UserAssigned'
   }
   properties: {
-    imageRegistryCredentials: [
+    imageRegistryCredentials: acrLoginServer == '' ? [] : [
       {
         server: acrLoginServer
         identity:  managedIdentityId
@@ -43,7 +43,14 @@ resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2021-10-01'
         name: toLower(nameSeed)
         properties: {
           image: image
-          //command: ['./start-from-aci.sh']
+          command: [
+            //'./start-from-aci.sh'
+            //'echo $PATH'
+            //'tail -f /dev/null'
+            'az login --identity --verbose'
+            'az aks get-credentials -g $RESOURCE_GROUP -n $CLUSTER_NAME'
+            'aks-hc check all -n $CLUSTER_NAME -g $RESOURCE_GROUP | tee $OUTPUT_FILE_NAME'
+          ]
           resources: {
             requests: {
               cpu: 1
